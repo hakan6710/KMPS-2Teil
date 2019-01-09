@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math/rand"
 	"strconv"
 	"sync"
@@ -16,19 +15,22 @@ const Etagen=10
 
 
 var wg sync.WaitGroup
-var defaultPerson=person{"default_person",0,0,make(chan int),0,0}
+var allePersonenAngekommen=false
 
+var statistikPersonen=make(chan statistikPerson,Max_Personen)
 type person struct {
 	name string
 
 	zieletage int
 	startetage int
 
+	startzeit	time.Time
+	wartezeit int
+
 	antwortchannel chan int
 	eingestiegenbeiWegstrecke int
 	gesamtWegstrecke int
 }
-
 type aufzug struct{
 	name string
 	derzeitigesStockwerk int
@@ -36,7 +38,10 @@ type aufzug struct{
 	fahrtrichtungNachOben bool
 }
 
-
+type statistikPerson struct{
+	wartezeit int64
+	gesamtwegstrecke int
+}
 func createAufzug(name string)(a aufzug){
 	a.name=name
 	a.derzeitigesStockwerk=0
@@ -48,17 +53,33 @@ func createAufzug(name string)(a aufzug){
 func createPerson(name string) (p person) {
 	p.name=name
 	p.gesamtWegstrecke=0
-	p.startetage=rand.Intn(Etagen)
-	p.zieletage=rand.Intn(Etagen)
+
+	zahlenungleich:=false
+	for zahlenungleich==false{
+		p.startetage=rand.Intn(Etagen)
+		p.zieletage=rand.Intn(Etagen)
+		if(p.startetage!=p.zieletage){
+			zahlenungleich=true
+		}
+	}
+
+	p.antwortchannel=make(chan int)
+
 	return p
 }
 
-func zentrale_steuerlogik() {
-
-	//random generator initialisieren
-	rand.NewSource(time.Now().UnixNano())
-
-
+func randomPersonCreat(anfrage_channel chan person){
+	//Personenroutine erstellen
+	for i:=0; i<Max_Personen;i++{
+		personen_name:="P"+strconv.Itoa(i)
+		p:=createPerson(personen_name)
+		go personen_routine(p,anfrage_channel)
+		if(i%2==0){
+			time.Sleep(100)
+		}
+	}
+}
+func steuerlogik()(ret int){
 	//Aufzüge erstellen
 	var aufzugChans[Aufzuganzahl]  chan person
 	for i:=0;i<Aufzuganzahl;i++{
@@ -70,20 +91,51 @@ func zentrale_steuerlogik() {
 
 	//Channel für Anfragen von Personen
 	anfrage_channel:= make(chan person,100)
+	go randomPersonCreat(anfrage_channel)
 
+	tchan:=make(chan int,1)
+	aufzugsteuerung2(anfrage_channel,aufzugChans,tchan)
 
-	//Personenroutine erstellen
-	for i:=0; i<Max_Personen;i++{
-		personen_name:="P"+strconv.Itoa(i)
-		p:=createPerson(personen_name)
-		go personen_routine(p,anfrage_channel)
+	<-tchan
+	statistikGesammelt:=false
+	WegstreckeAllerPersonen:=0
+	WartezeitAllerPersonen:=int64(0)
+	counter:=0
+
+	for statistikGesammelt!=true {
+
+		select{
+		case msg1:=<-statistikPersonen:
+			WegstreckeAllerPersonen+=msg1.gesamtwegstrecke
+			WartezeitAllerPersonen+=msg1.wartezeit
+			counter+=1
+		default:
+			if(counter>=10){
+				statistikGesammelt=true
+
+			}
+		}
 	}
+
+	println("Wegstrecke aller Personen=", WegstreckeAllerPersonen)
+	println("Wartezeit aller Personen=",WartezeitAllerPersonen)
+
+	wg.Done()
+	return 0
+}
+func zentrale_steuerlogik() {
+
+	//random generator initialisieren
+	rand.NewSource(time.Now().UnixNano())
+	go steuerlogik()
+
+}
+
+func aufzugsteuerung1(anfragePersonen chan person,aufzugChans[Aufzuganzahl] chan person ,tchan chan int){
 	roundRobinZaehler:=0
-	for {
+	for allePersonenAngekommen!=true {
 
-		ankommendeAnfrage:=<-anfrage_channel
-
-
+		ankommendeAnfrage:=<-anfragePersonen
 		aufzugChans[roundRobinZaehler]<-ankommendeAnfrage
 
 		if(roundRobinZaehler<Aufzuganzahl-1){
@@ -93,10 +145,35 @@ func zentrale_steuerlogik() {
 		}
 		//println(ankommendeAnfrage.name,ankommendeAnfrage.etage)
 	}
+	tchan<-0
 }
 
-func aufzugsteuerung1(){
 
+func aufzugsteuerung2(anfragePersonen chan person,aufzugChans[Aufzuganzahl] chan person ,tchan chan int){
+
+	var letztePersonZiel[Aufzuganzahl] int
+
+	for i:=0;i<Aufzuganzahl;i++{
+		letztePersonZiel[i]=-1
+	}
+	for allePersonenAngekommen!=true {
+
+		ankommendeAnfrage:=<-anfragePersonen
+
+		//Suche geringste Differenz zwischen Zieletage der Anfrage und dem Wert aus letztePersonZiel
+		auswahl:=0
+		diffrenz_temp:=0
+		for i:=0;i<Aufzuganzahl;i++{
+			if(ankommendeAnfrage.zieletage-letztePersonZiel[i]<diffrenz_temp){
+				auswahl=i
+			}
+		}
+
+		aufzugChans[auswahl]<-ankommendeAnfrage
+
+		//println(ankommendeAnfrage.name,ankommendeAnfrage.etage)
+	}
+	tchan<-0
 }
 
 func updateStockwerk(a *aufzug){
@@ -115,13 +192,9 @@ func updateStockwerk(a *aufzug){
 			a.fahrtrichtungNachOben=true
 		}
 	}
-
 }
-
 func EinsteigenUndAussteigen(a *aufzug,anfragen*[]person,eingestiegene*[]person){
-
 	//Einsteigenlassen
-
 	for i:=0;i< len(*anfragen);i++{
 		if (*anfragen)[i].startetage==a.derzeitigesStockwerk{
 			//Anfrage aus der Liste rausloeschen
@@ -130,55 +203,66 @@ func EinsteigenUndAussteigen(a *aufzug,anfragen*[]person,eingestiegene*[]person)
 
 			//Anfrage aus der Liste rausloeschen
 			(*anfragen) = append((*anfragen)[:i], (*anfragen)[i+1:]...)
-			print("JMD IST EINGETIEGEN")
+
 		}
 	}
 
 	//Aussteigenlassen
 	for i:=0;i< len(*eingestiegene);i++{
 		if (*eingestiegene)[i].zieletage==a.derzeitigesStockwerk{
-
 			//Antworte Person, die aussteigt mit der gefahrenen Wegstrecke
-			println("Vor der Kommunikation mit Person")
 			(*eingestiegene)[i].antwortchannel<-(a.gesamtWegstrecke-(*eingestiegene)[i].eingestiegenbeiWegstrecke)
-			println("Nach der Kommunikation mit Person")
+
 			//Anfrage aus der Liste rausloeschen
 			(*eingestiegene) = append((*eingestiegene)[:i], (*eingestiegene)[i+1:]...)
-			print("Jmd ist Ausgestiegen")
 		}
 	}
 
 }
 func aufzug_routine(a aufzug,channel chan person) {
 
-	println("Aufzug erstellt")
 	anfragenListe := make([]person, 0)
 	eingestiegenenListe:=make([]person,0)
-	for {
+
+
+	for allePersonenAngekommen!=true {
 		select{
 		case msg1:=<-channel:
 			//Füge Anfrage der Person der anfragenListe hinzu
-			fmt.Println("Anfrage angekommen")
 			anfragenListe =append(anfragenListe,msg1)
 		default:
 		}
+		if(len(anfragenListe)+len(eingestiegenenListe)>0){
+			updateStockwerk(&a)
+			EinsteigenUndAussteigen(&a,&anfragenListe,&eingestiegenenListe)
+		}
 
-		updateStockwerk(&a)
-		EinsteigenUndAussteigen(&a,&anfragenListe,&eingestiegenenListe)
+
 	}
 
+
 }
-
 func personen_routine(p person, anfrageChan chan person) {
+	//println("Person erstellt")
 
-	//print("Person erstellt")
+	start:=time.Now()
+
 	anfrageChan<-p
-	fmt.Println(p.name," ",p.startetage,"/",p.zieletage," ist solange=",strconv.Itoa(<-p.antwortchannel),"mitgefahren")
+	p.gesamtWegstrecke=<-p.antwortchannel
+	gemesseneZeit:=time.Since(start)
 	wg.Done()
+	statistikPersonen<-statistikPerson{gemesseneZeit.Nanoseconds(),p.gesamtWegstrecke}
+
 }
 
 func main() {
+
+
 	go zentrale_steuerlogik()
 	wg.Add(Max_Personen)
 	wg.Wait()
-	}
+
+	allePersonenAngekommen=true
+	wg.Add(1)
+	wg.Wait()
+}
