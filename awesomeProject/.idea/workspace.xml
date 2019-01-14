@@ -13,24 +13,34 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/aufzug.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-165">
-              <caret line="80" column="1" lean-forward="true" selection-start-line="80" selection-start-column="1" selection-end-line="80" selection-end-column="1" />
+            <state relative-caret-position="148">
+              <caret line="120" column="23" selection-start-line="120" selection-start-column="23" selection-end-line="120" selection-end-column="23" />
               <folding>
-                <element signature="e#14#71#0" expanded="true" />
-                <element signature="e#325#459#0" />
-                <element signature="e#472#570#0" />
-                <element signature="e#685#699#0" />
+                <element signature="e#450#621#0" />
+                <element signature="e#634#753#0" />
                 <element signature="n#!!block;n#createAufzug#0" />
                 <element signature="n#!!block;n#createPerson#0" />
-                <element signature="e#1223#1366#0" />
-                <element signature="e#1842#2066#0" />
+                <element signature="n#!!block;n#randomPersonCreat#0" />
+                <element signature="n#!!block;n#zentrale_steuerlogik#0" />
                 <element signature="n#!!block;n#aufzugsteuerung1#0" />
-                <element signature="n#!!block;n#aufzugsteuerung1#1" />
+                <element signature="n#!!block;n#aufzugsteuerung2#0" />
+                <element signature="e#4626#5026#0" />
                 <element signature="n#!!block;n#updateStockwerk#0" />
                 <element signature="n#!!block;n#EinsteigenUndAussteigen#0" />
                 <element signature="n#!!block;n#aufzug_routine#0" />
+                <element signature="e#6705#6849#0" />
                 <element signature="n#!!block;n#personen_routine#0" />
+                <element signature="n#!!block;n#main#1" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://C:/Go/src/sync/waitgroup.go">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="193">
+              <caret line="73" selection-start-line="73" selection-end-line="73" />
             </state>
           </provider>
         </entry>
@@ -56,9 +66,10 @@
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="939" />
-    <option name="width" value="988" />
-    <option name="height" value="1047" />
+    <option name="x" value="-8" />
+    <option name="y" value="-8" />
+    <option name="width" value="1936" />
+    <option name="height" value="1056" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -66,6 +77,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -77,7 +89,6 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -133,15 +144,14 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
-    <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.0858209" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.04317697" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.49253732" weight="0.30877572" />
-      <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.49946696" weight="0.39869988" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.49253732" weight="0.30552545" />
+      <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.49946696" weight="0.39761648" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" sideWeight="0.49946696" weight="0.32936078" />
@@ -173,13 +183,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://C:/Go/src/sync/waitgroup.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="304">
-          <caret line="129" selection-start-line="129" selection-end-line="129" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://C:/Go/src/runtime/sema.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="203">
@@ -187,25 +190,33 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://C:/Go/src/sync/waitgroup.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="193">
+          <caret line="73" selection-start-line="73" selection-end-line="73" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/aufzug.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-165">
-          <caret line="80" column="1" lean-forward="true" selection-start-line="80" selection-start-column="1" selection-end-line="80" selection-end-column="1" />
+        <state relative-caret-position="148">
+          <caret line="120" column="23" selection-start-line="120" selection-start-column="23" selection-end-line="120" selection-end-column="23" />
           <folding>
-            <element signature="e#14#71#0" expanded="true" />
-            <element signature="e#325#459#0" />
-            <element signature="e#472#570#0" />
-            <element signature="e#685#699#0" />
+            <element signature="e#450#621#0" />
+            <element signature="e#634#753#0" />
             <element signature="n#!!block;n#createAufzug#0" />
             <element signature="n#!!block;n#createPerson#0" />
-            <element signature="e#1223#1366#0" />
-            <element signature="e#1842#2066#0" />
+            <element signature="n#!!block;n#randomPersonCreat#0" />
+            <element signature="n#!!block;n#zentrale_steuerlogik#0" />
             <element signature="n#!!block;n#aufzugsteuerung1#0" />
-            <element signature="n#!!block;n#aufzugsteuerung1#1" />
+            <element signature="n#!!block;n#aufzugsteuerung2#0" />
+            <element signature="e#4626#5026#0" />
             <element signature="n#!!block;n#updateStockwerk#0" />
             <element signature="n#!!block;n#EinsteigenUndAussteigen#0" />
             <element signature="n#!!block;n#aufzug_routine#0" />
+            <element signature="e#6705#6849#0" />
             <element signature="n#!!block;n#personen_routine#0" />
+            <element signature="n#!!block;n#main#1" />
           </folding>
         </state>
       </provider>

@@ -36,28 +36,30 @@ type person struct {
 }
 type aufzug struct{
 	name string
+	nummer int
 	derzeitigesStockwerk int
 	gesamtWegstrecke int
 	fahrtrichtungNachOben bool
-	tickerChan chan int
+	tickerChan chan bool
 }
 
 type statistikPerson struct{
-	wartezeit int64
+	wartezeit int
 	gesamtwegstrecke int
 }
 
 type statistikGesamteSimulation struct{
 	pStrecke int
-	pZeit int64
+	pZeit int
 	aStrecke int
 }
-func createAufzug(name string)(a aufzug){
+func createAufzug(name string,num int)(a aufzug){
 	a.name=name
 	a.derzeitigesStockwerk=0
 	a.gesamtWegstrecke=0
 	a.fahrtrichtungNachOben=true
-	a.tickerChan=make(chan int,1)
+	a.tickerChan=make(chan bool,1)
+	a.nummer=num
 	return a
 }
 
@@ -92,14 +94,20 @@ func randomPersonCreat(anfrage_channel chan person){
 }
 func steuerlogik(retChan chan statistikGesamteSimulation){
 	//Aufzüge erstellen
+
+
+
 	var aufzugChans[Aufzuganzahl]  chan person
-	var aufzugTicker[Aufzuganzahl] chan int
+	var aufzugTicker[Aufzuganzahl] chan bool
+
 	for i:=0;i<Aufzuganzahl;i++{
 		aufzugChans[i]=make(chan person)
 		aufzug_name:="A"+strconv.Itoa(i)
-		a:=createAufzug(aufzug_name)
-		aufzugTicker[i]=make(chan int,1)
+		a:=createAufzug(aufzug_name,i)
+		aufzugTicker[i]=make(chan bool,1)
 		a.tickerChan=aufzugTicker[i]
+
+
 		go aufzug_routine(a,aufzugChans[i])
 	}
 
@@ -110,26 +118,32 @@ func steuerlogik(retChan chan statistikGesamteSimulation){
 	println("Personerstellt")
 	//Aufzugssteuerung aufrufen und auf deren Terminierung warten
 	tchan:=make(chan int,1)
-	println("X")
 	go aufzugsteuerung2(anfrage_channel,aufzugChans,tchan)
 
-	println("Test")
-	for allePersonenAngekommen!=true{
-		//time.Sleep(10 * time.Millisecond)
+
+	var fertig=false
+
+	for fertig!=true{
 		for i:=0;i<Aufzuganzahl;i++{
-			print("I=",i)
-			aufzugTicker[i]<-0
+			//println("Einmal")
+			aufzugTicker[i]<-true
+			<-aufzugTicker[i]
 		}
-		println("BLA BLA ",allePersonenAngekommen)
+		if(allePersonenAngekommen==true){
+			fertig=true
+		}
 	}
-	println("BASDBASDAJSDASDJASDJNASDN")
+
+	println("AMK")
 	var aStatistik=<-tchan
+
+	println("Statistik von Aufzügen=",aStatistik)
+
 
 	statistikGesammelt:=false
 	WegstreckeAllerPersonen:=0
-	WartezeitAllerPersonen:=int64(0)
+	WartezeitAllerPersonen:=0
 	counter:=0
-
 	//Personenstatistiken sammeln
 	for statistikGesammelt!=true {
 		select{
@@ -153,11 +167,12 @@ func zentrale_steuerlogik() {
 	//random generator initialisieren
 	rand.NewSource(time.Now().UnixNano())
 	retChan:=make(chan statistikGesamteSimulation,1)
-	for i:=0;i<4;i++{
+	for i:=0;i<1;i++{
 		allePersonenAngekommen=false
 		go steuerlogik(retChan)
 		wg.Add(Max_Personen)
 		wg.Wait()
+		println("Ein Durchlauf FERTIGG")
 		allePersonenAngekommen=true
 
 		var s1 =<-retChan
@@ -170,18 +185,24 @@ func zentrale_steuerlogik() {
 func aufzugsteuerung1(anfragePersonen chan person,aufzugChans[Aufzuganzahl] chan person ,tchan chan int){
 	roundRobinZaehler:=0
 	for allePersonenAngekommen!=true {
+		select{
+		case msg1:=<-anfragePersonen:
+			ankommendeAnfrage:=msg1
+			aufzugChans[roundRobinZaehler]<-ankommendeAnfrage
 
-		ankommendeAnfrage:=<-anfragePersonen
-		aufzugChans[roundRobinZaehler]<-ankommendeAnfrage
-
-		if(roundRobinZaehler<Aufzuganzahl-1){
-			roundRobinZaehler+=1
-		}else {
-			roundRobinZaehler=0
+			if(roundRobinZaehler<Aufzuganzahl-1){
+				roundRobinZaehler+=1
+			}else {
+				roundRobinZaehler=0
+			}
+		default:
 		}
 		//println(ankommendeAnfrage.name,ankommendeAnfrage.etage)
 	}
+
 	tchan<-0
+	println("Statistik von Aufzügen gesendet")
+
 }
 
 
@@ -193,19 +214,24 @@ func aufzugsteuerung2(anfragePersonen chan person,aufzugChans[Aufzuganzahl] chan
 		letztePersonZiel[i]=-1
 	}
 	for allePersonenAngekommen!=true {
-
-		ankommendeAnfrage:=<-anfragePersonen
-
-		//Suche geringste Differenz zwischen Zieletage der Anfrage und dem Wert aus letztePersonZiel
-		auswahl:=0
-		diffrenz_temp:=0
-		for i:=0;i<Aufzuganzahl;i++{
-			if(ankommendeAnfrage.zieletage-letztePersonZiel[i]<diffrenz_temp){
-				auswahl=i
+		select{
+		case msg1:=<-anfragePersonen:
+			ankommendeAnfrage:=msg1
+			//Suche geringste Differenz zwischen Zieletage der Anfrage und dem Wert aus letztePersonZiel
+			auswahl:=0
+			diffrenz_temp:=0
+			for i:=0;i<Aufzuganzahl;i++{
+				if(ankommendeAnfrage.zieletage-letztePersonZiel[i]<diffrenz_temp){
+					auswahl=i
+				}
 			}
+			aufzugChans[auswahl]<-ankommendeAnfrage
+		default:
 		}
 
-		aufzugChans[auswahl]<-ankommendeAnfrage
+
+
+
 
 		//println(ankommendeAnfrage.name,ankommendeAnfrage.etage)
 	}
@@ -221,6 +247,7 @@ func aufzugsteuerung2(anfragePersonen chan person,aufzugChans[Aufzuganzahl] chan
 	}
 	//println("Aufzugstatistik sammeln fertig")
 	tchan<-ergebnis
+	println("Aufzugstatistik sammeln fertig")
 }
 
 func updateStockwerk(a *aufzug){
@@ -274,7 +301,9 @@ func aufzug_routine(a aufzug,channel chan person) {
 	eingestiegenenListe:=make([]person,0)
 
 
-	for allePersonenAngekommen!=true {
+	var fertig=false
+	for fertig!=true {
+		<-a.tickerChan
 		select{
 		case msg1:=<-channel:
 			//Füge Anfrage der Person der anfragenListe hinzu
@@ -285,13 +314,14 @@ func aufzug_routine(a aufzug,channel chan person) {
 			updateStockwerk(&a)
 			EinsteigenUndAussteigen(&a,&anfragenListe,&eingestiegenenListe)
 		}
-		println("Vor Ticker")
-		<-a.tickerChan
-		println("Nach Ticker")
+		a.tickerChan<-true
+		if(allePersonenAngekommen==true){
+			fertig=true
+		}
+
 	}
-
+	//println("Aufzug fertig",a.gesamtWegstrecke,"Nummer",a.nummer)
 	statistikAufzug<-a.gesamtWegstrecke
-
 }
 func personen_routine(p person, anfrageChan chan person) {
 	//println("Person erstellt")
@@ -300,10 +330,12 @@ func personen_routine(p person, anfrageChan chan person) {
 
 	anfrageChan<-p
 	p.gesamtWegstrecke=<-p.antwortchannel
-	gemesseneZeit:=time.Since(start)
+	var gemesseneZeit =start.Second()-time.Now().Second()
+	//println("Test",p.gesamtWegstrecke)
 	wg.Done()
-	statistikPersonen<-statistikPerson{gemesseneZeit.Nanoseconds(),p.gesamtWegstrecke}
-
+	println(p.name,gemesseneZeit,start.Nanosecond(),p.zieletage,p.startetage)
+	statistikPersonen<-statistikPerson{gemesseneZeit,p.gesamtWegstrecke}
+	//println("Personen Statistik gesendet")
 }
 
 func main() {
