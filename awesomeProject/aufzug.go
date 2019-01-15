@@ -2,6 +2,7 @@ package main
 
 import (
 	"math/rand"
+	"runtime"
 	"strconv"
 	"sync"
 	"time"
@@ -9,20 +10,23 @@ import (
 
 //Konstantendefinition
 const Aufzuganzahl=4
-const Maximalkapazitaet_Aufzug=5
 const Max_Personen=100
 const Etagen=10
 
-
-var wg sync.WaitGroup
+var wgPersonen sync.WaitGroup
 var wgEnd sync.WaitGroup
+
 var allePersonenAngekommen=false
 
+var s1 = rand.NewSource(time.Now().UnixNano())
+var r1 = rand.New(s1)
 
 var statistikPersonen=make(chan statistikPerson,Max_Personen)
 var statistikAufzug=make(chan int,Aufzuganzahl)
+
 type person struct {
 	name string
+	nummer int
 
 	zieletage int
 	startetage int
@@ -42,15 +46,13 @@ type aufzug struct{
 	fahrtrichtungNachOben bool
 	tickerChan chan bool
 }
-
 type statistikPerson struct{
-	wartezeit int
+	wartezeit int64
 	gesamtwegstrecke int
 }
-
 type statistikGesamteSimulation struct{
 	pStrecke int
-	pZeit int
+	pZeit int64
 	aStrecke int
 }
 func createAufzug(name string,num int)(a aufzug){
@@ -63,89 +65,111 @@ func createAufzug(name string,num int)(a aufzug){
 	return a
 }
 
-func createPerson(name string) (p person) {
+func createPerson(name string,num int) (p person) {
 	p.name=name
 	p.gesamtWegstrecke=0
+	p.nummer=num
+	zahlenidentisch:=true
 
-	zahlenungleich:=false
-	for zahlenungleich==false{
-		p.startetage=rand.Intn(Etagen)
-		p.zieletage=rand.Intn(Etagen)
+
+	for zahlenidentisch{
+		p.startetage=r1.Intn(Etagen)
+		p.zieletage=r1.Intn(Etagen)
 		if(p.startetage!=p.zieletage){
-			zahlenungleich=true
+			zahlenidentisch=false
 		}
 	}
-
 	p.antwortchannel=make(chan int)
-
 	return p
 }
 
 func randomPersonCreat(anfrage_channel chan person){
-	//Personenroutine erstellen
+
 	for i:=0; i<Max_Personen;i++{
 		personen_name:="P"+strconv.Itoa(i)
-		p:=createPerson(personen_name)
+		p:=createPerson(personen_name,i)
+		p.startzeit=time.Now()
 		go personen_routine(p,anfrage_channel)
 		if(i%2==0){
-			time.Sleep(100)
+			time.Sleep(time.Duration(r1.Intn(100)))
 		}
 	}
 }
-func steuerlogik(retChan chan statistikGesamteSimulation){
-	//Aufzüge erstellen
 
-
+func steuerlogik(retChan chan statistikGesamteSimulation,aufzugsteuerung int){
 
 	var aufzugChans[Aufzuganzahl]  chan person
 	var aufzugTicker[Aufzuganzahl] chan bool
 
+	//Aufzug erzeugen
 	for i:=0;i<Aufzuganzahl;i++{
 		aufzugChans[i]=make(chan person)
 		aufzug_name:="A"+strconv.Itoa(i)
 		a:=createAufzug(aufzug_name,i)
 		aufzugTicker[i]=make(chan bool,1)
 		a.tickerChan=aufzugTicker[i]
-
-
 		go aufzug_routine(a,aufzugChans[i])
 	}
 
 	//Channel für Anfragen von Personen
-	println("Person")
 	anfrage_channel:= make(chan person,100)
+
+	//Aufruf des PersonenCreators
 	go randomPersonCreat(anfrage_channel)
-	println("Personerstellt")
-	//Aufzugssteuerung aufrufen und auf deren Terminierung warten
+
+	//Auswahl von aufzugssteuerungs-algorithmus
 	tchan:=make(chan int,1)
-	go aufzugsteuerung2(anfrage_channel,aufzugChans,tchan)
+	if(aufzugsteuerung==0){
+		go aufzugsteuerung1(anfrage_channel,aufzugChans,tchan)
+	}else{
+		go aufzugsteuerung2(anfrage_channel,aufzugChans,tchan)
+	}
 
-
-	var fertig=false
-
-	for fertig!=true{
+	//Ticker für Aufzüge
+	var fertig=true
+	for fertig{
 		for i:=0;i<Aufzuganzahl;i++{
-			//println("Einmal")
-			aufzugTicker[i]<-true
-			<-aufzugTicker[i]
+			dontBlock:=true
+			for dontBlock{
+				select{
+				case aufzugTicker[i]<-true:
+					dontBlock=false
+				default:
+					if allePersonenAngekommen==true{
+						dontBlock=false
+					}
+					runtime.Gosched()
+				}
+			}
+
+			dontBlock=true
+			for dontBlock{
+				select{
+				case <-aufzugTicker[i]:
+					dontBlock=false
+				default:
+					if allePersonenAngekommen==true{
+						dontBlock=false
+					}
+					runtime.Gosched()
+				}
+			}
+
 		}
 		if(allePersonenAngekommen==true){
-			fertig=true
+			fertig=false
 		}
 	}
 
-	println("AMK")
+	//Auf Statistik von Aufzugssteuerung warten
 	var aStatistik=<-tchan
 
-	println("Statistik von Aufzügen=",aStatistik)
-
-
-	statistikGesammelt:=false
+	//Statistik von Personen sammeln
+	statistikGesammelt:=true
 	WegstreckeAllerPersonen:=0
-	WartezeitAllerPersonen:=0
+	WartezeitAllerPersonen:=int64(0)
 	counter:=0
-	//Personenstatistiken sammeln
-	for statistikGesammelt!=true {
+	for statistikGesammelt{
 		select{
 		case msg1:=<-statistikPersonen:
 			WegstreckeAllerPersonen+=msg1.gesamtwegstrecke
@@ -153,36 +177,56 @@ func steuerlogik(retChan chan statistikGesamteSimulation){
 			counter+=1
 		default:
 			if(counter>=Max_Personen){
-				statistikGesammelt=true
+				statistikGesammelt=false
 
 			}
 		}
 	}
 
+	//Statistik an Zentrale_Steuerlogik senden
 	retChan<-statistikGesamteSimulation{WegstreckeAllerPersonen,WartezeitAllerPersonen,aStatistik}
 
 	}
 func zentrale_steuerlogik() {
 
-	//random generator initialisieren
-	rand.NewSource(time.Now().UnixNano())
 	retChan:=make(chan statistikGesamteSimulation,1)
-	for i:=0;i<1;i++{
-		allePersonenAngekommen=false
-		go steuerlogik(retChan)
-		wg.Add(Max_Personen)
-		wg.Wait()
-		println("Ein Durchlauf FERTIGG")
-		allePersonenAngekommen=true
 
-		var s1 =<-retChan
-		println(s1.pStrecke,"/",s1.pZeit/1000000,"/",s1.aStrecke)
+	for j:=0;j<2;j++{
+		GesamteStatistik :=statistikGesamteSimulation{0,0,0}
+		for i:=0;i<3;i++{
+			//togglen der Globalen Variable zum Simulationsstopp
+			allePersonenAngekommen=false
+
+			//Aufruf der Steuerlogik mit j als Auswahl der Aufzugssteuerungs-Algorithmus
+			//retChan als Channel fürs Senden der Stastik
+			go steuerlogik(retChan,j)
+
+			//Warte bis alle Personen am Ziel
+			wgPersonen.Add(Max_Personen)
+			wgPersonen.Wait()
+
+			//Simulationsstopp
+			allePersonenAngekommen=true
+
+			//Warte auf Statistik von Steuerlogik
+			var s1 =<-retChan
+			println("pStrecke=",s1.pStrecke,"pZeit=",s1.pZeit/1000000,"aStrecke=",s1.aStrecke)
+
+			//Statistik des jetzigen Durchlaufs abspeichern
+			GesamteStatistik.aStrecke+=s1.aStrecke
+			GesamteStatistik.pStrecke+=s1.pStrecke
+			GesamteStatistik.pZeit+=s1.pZeit
+		}
+		println("Aufzugsteuerung",j, ")","Personen_Gesamtstrecke=", GesamteStatistik.pStrecke,"Personen_Zeit=", GesamteStatistik.pZeit,"Aufzug_Gesamtstrecke=", GesamteStatistik.aStrecke)
 	}
+
 
 	wgEnd.Done()
 }
 
 func aufzugsteuerung1(anfragePersonen chan person,aufzugChans[Aufzuganzahl] chan person ,tchan chan int){
+
+	//Ankommende Anfrange, nach Roundrobin an Aufzug weitergeben
 	roundRobinZaehler:=0
 	for allePersonenAngekommen!=true {
 		select{
@@ -197,22 +241,33 @@ func aufzugsteuerung1(anfragePersonen chan person,aufzugChans[Aufzuganzahl] chan
 			}
 		default:
 		}
-		//println(ankommendeAnfrage.name,ankommendeAnfrage.etage)
+
 	}
 
-	tchan<-0
-	println("Statistik von Aufzügen gesendet")
+	//Statistik sammeln
+	ergebnis:=0
+	counter :=0
+	for counter<Aufzuganzahl{
+		var msg1=<-statistikAufzug
+		ergebnis+=msg1
+		counter+=1
+	}
+	//Statistik an Steuerlogik senden
+	tchan<-ergebnis
+
 
 }
 
 
 func aufzugsteuerung2(anfragePersonen chan person,aufzugChans[Aufzuganzahl] chan person ,tchan chan int){
 
+	//Array für Zieletage der zuletzt gesendeten Personanfrage an Aufzug
 	var letztePersonZiel[Aufzuganzahl] int
-
 	for i:=0;i<Aufzuganzahl;i++{
 		letztePersonZiel[i]=-1
 	}
+
+	//Steuerlogik, Suche min(letztePersonziel-anfrage.Zieletage)
 	for allePersonenAngekommen!=true {
 		select{
 		case msg1:=<-anfragePersonen:
@@ -224,34 +279,30 @@ func aufzugsteuerung2(anfragePersonen chan person,aufzugChans[Aufzuganzahl] chan
 				if(ankommendeAnfrage.zieletage-letztePersonZiel[i]<diffrenz_temp){
 					auswahl=i
 				}
+				if(letztePersonZiel[i]==-1){
+					auswahl=i
+				}
 			}
 			aufzugChans[auswahl]<-ankommendeAnfrage
 		default:
 		}
-
-
-
-
-
-		//println(ankommendeAnfrage.name,ankommendeAnfrage.etage)
 	}
 
+	//Statistik sammeln von Aufzügen
 	ergebnis:=0
 	counter :=0
-
-	//println("Simulation fertig")
 	for counter<Aufzuganzahl{
 		var msg1=<-statistikAufzug
 		ergebnis+=msg1
 		counter+=1
 	}
-	//println("Aufzugstatistik sammeln fertig")
+
+	//Senden der Statistik
 	tchan<-ergebnis
-	println("Aufzugstatistik sammeln fertig")
+
 }
 
 func updateStockwerk(a *aufzug){
-
 
 	if a.fahrtrichtungNachOben{
 		if a.derzeitigesStockwerk<Etagen{
@@ -297,50 +348,82 @@ func EinsteigenUndAussteigen(a *aufzug,anfragen*[]person,eingestiegene*[]person)
 }
 func aufzug_routine(a aufzug,channel chan person) {
 
+	//Slices für Personenanfrangen und eingestiegene Personen
 	anfragenListe := make([]person, 0)
 	eingestiegenenListe:=make([]person,0)
 
 
-	var fertig=false
-	for fertig!=true {
-		<-a.tickerChan
+	for allePersonenAngekommen!=true{
+		//Ticker für Aufzug
+		dontBlock:=true
+		for dontBlock{
+			select{
+			case <-a.tickerChan:
+				dontBlock=false
+			default:
+				if allePersonenAngekommen==true{
+					dontBlock=false
+				}
+				runtime.Gosched()
+			}
+		}
+
+		//Anfrage von einer Person empfangen
 		select{
 		case msg1:=<-channel:
 			//Füge Anfrage der Person der anfragenListe hinzu
 			anfragenListe =append(anfragenListe,msg1)
 		default:
 		}
+
+		//Abfrage ob überhaupt Personen in den Listen gespeichert
+		//je nach dem Stockwerk updaten und Personen einsteigen/aussteigen lassen
 		if(len(anfragenListe)+len(eingestiegenenListe)>0){
 			updateStockwerk(&a)
 			EinsteigenUndAussteigen(&a,&anfragenListe,&eingestiegenenListe)
 		}
-		a.tickerChan<-true
-		if(allePersonenAngekommen==true){
-			fertig=true
+
+		//Ticker für Aufzug
+		dontBlock=true
+		for dontBlock{
+			select{
+			case a.tickerChan<-true:
+				dontBlock=false
+			default:
+				if allePersonenAngekommen==true{
+					dontBlock=false
+				}
+				runtime.Gosched()
+			}
 		}
 
 	}
-	//println("Aufzug fertig",a.gesamtWegstrecke,"Nummer",a.nummer)
+
+	//Statistik senden
 	statistikAufzug<-a.gesamtWegstrecke
+
 }
 func personen_routine(p person, anfrageChan chan person) {
-	//println("Person erstellt")
-
-	start:=time.Now()
-
+	//Anfrage an Aufzugssteuerung senden
 	anfrageChan<-p
+
+	//Antwort von Aufzug über Wegstrecke
 	p.gesamtWegstrecke=<-p.antwortchannel
-	var gemesseneZeit =start.Second()-time.Now().Second()
-	//println("Test",p.gesamtWegstrecke)
-	wg.Done()
-	println(p.name,gemesseneZeit,start.Nanosecond(),p.zieletage,p.startetage)
-	statistikPersonen<-statistikPerson{gemesseneZeit,p.gesamtWegstrecke}
-	//println("Personen Statistik gesendet")
+
+	//Berechnung Zeit
+	gemesseneZeit:=time.Since(p.startzeit)
+
+	//wg Triggern
+	wgPersonen.Done()
+
+	//statistik senden
+	statistikPersonen<-statistikPerson{gemesseneZeit.Nanoseconds(),p.gesamtWegstrecke}
+
 }
 
 func main() {
+	//Aufruf der zentralen_steuerlogik
 	go zentrale_steuerlogik()
-
 	wgEnd.Add(1)
 	wgEnd.Wait()
 }

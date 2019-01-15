@@ -13,22 +13,37 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/aufzug.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="148">
-              <caret line="120" column="23" selection-start-line="120" selection-start-column="23" selection-end-line="120" selection-end-column="23" />
+            <state relative-caret-position="612">
+              <caret line="98" column="77" selection-start-line="98" selection-start-column="77" selection-end-line="98" selection-end-column="77" />
               <folding>
-                <element signature="e#450#621#0" />
-                <element signature="e#634#753#0" />
+                <element signature="e#14#64#0" expanded="true" />
+                <element signature="e#388#559#0" />
+                <element signature="e#572#704#0" />
+                <element signature="e#727#773#0" />
+                <element signature="e#807#855#0" />
                 <element signature="n#!!block;n#createAufzug#0" />
                 <element signature="n#!!block;n#createPerson#0" />
                 <element signature="n#!!block;n#randomPersonCreat#0" />
+                <element signature="n#!!block;n#steuerlogik#0" />
+                <element signature="e#1827#2041#0" />
+                <element signature="e#2553#2716#0" />
+                <element signature="e#2943#3123#0" />
+                <element signature="e#3015#3248#0" />
                 <element signature="n#!!block;n#zentrale_steuerlogik#0" />
                 <element signature="n#!!block;n#aufzugsteuerung1#0" />
+                <element signature="e#3872#4180#0" />
                 <element signature="n#!!block;n#aufzugsteuerung2#0" />
-                <element signature="e#4626#5026#0" />
+                <element signature="e#4417#4446#0" />
+                <element signature="e#4485#4868#0" />
+                <element signature="e#4495#4853#0" />
+                <element signature="e#4874#4937#0" />
                 <element signature="n#!!block;n#updateStockwerk#0" />
                 <element signature="n#!!block;n#EinsteigenUndAussteigen#0" />
+                <element signature="e#5672#6002#0" />
                 <element signature="n#!!block;n#aufzug_routine#0" />
-                <element signature="e#6705#6849#0" />
+                <element signature="e#7251#7977#0" />
+                <element signature="e#6873#6882#0" />
+                <element signature="e#7346#7509#0" />
                 <element signature="n#!!block;n#personen_routine#0" />
                 <element signature="n#!!block;n#main#1" />
               </folding>
@@ -39,7 +54,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://C:/Go/src/sync/waitgroup.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="193">
+            <state relative-caret-position="1173">
               <caret line="73" selection-start-line="73" selection-end-line="73" />
             </state>
           </provider>
@@ -54,6 +69,11 @@
       </list>
     </option>
   </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>rand</find>
+    </findStrings>
+  </component>
   <component name="GOROOT" path="C:\Go" />
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
@@ -65,11 +85,10 @@
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="-8" />
-    <option name="y" value="-8" />
-    <option name="width" value="1936" />
-    <option name="height" value="1056" />
+  <component name="ProjectFrameBounds">
+    <option name="x" value="953" />
+    <option name="width" value="974" />
+    <option name="height" value="1047" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -77,7 +96,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -89,6 +107,7 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -97,6 +116,7 @@
     <property name="go.gopath.indexing.explicitly.defined" value="true" />
     <property name="go.sdk.automatically.set" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="nodejs_package_manager_path" value="npm" />
     <property name="settings.editor.selected.configurable" value="vcs.Git" />
   </component>
   <component name="RecentsManager">
@@ -143,14 +163,15 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
+    <frame x="953" y="0" width="974" height="1047" extended-state="0" />
+    <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.04317697" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.088621445" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.49253732" weight="0.30552545" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.49124727" weight="0.3085339" />
       <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.49946696" weight="0.39761648" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -159,7 +180,7 @@
       <window_info anchor="bottom" id="Database Changes" order="8" />
       <window_info anchor="bottom" id="Version Control" order="9" sideWeight="0.4989339" weight="0.32936078" />
       <window_info anchor="bottom" id="Terminal" order="10" sideWeight="0.49840087" weight="0.32936078" />
-      <window_info anchor="bottom" id="Event Log" order="11" sideWeight="0.5074627" side_tool="true" weight="0.30877572" />
+      <window_info anchor="bottom" id="Event Log" order="11" sideWeight="0.50875276" side_tool="true" weight="0.3085339" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
@@ -190,34 +211,49 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://C:/Go/src/sync/waitgroup.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="193">
-          <caret line="73" selection-start-line="73" selection-end-line="73" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/aufzug.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="148">
-          <caret line="120" column="23" selection-start-line="120" selection-start-column="23" selection-end-line="120" selection-end-column="23" />
+        <state relative-caret-position="612">
+          <caret line="98" column="77" selection-start-line="98" selection-start-column="77" selection-end-line="98" selection-end-column="77" />
           <folding>
-            <element signature="e#450#621#0" />
-            <element signature="e#634#753#0" />
+            <element signature="e#14#64#0" expanded="true" />
+            <element signature="e#388#559#0" />
+            <element signature="e#572#704#0" />
+            <element signature="e#727#773#0" />
+            <element signature="e#807#855#0" />
             <element signature="n#!!block;n#createAufzug#0" />
             <element signature="n#!!block;n#createPerson#0" />
             <element signature="n#!!block;n#randomPersonCreat#0" />
+            <element signature="n#!!block;n#steuerlogik#0" />
+            <element signature="e#1827#2041#0" />
+            <element signature="e#2553#2716#0" />
+            <element signature="e#2943#3123#0" />
+            <element signature="e#3015#3248#0" />
             <element signature="n#!!block;n#zentrale_steuerlogik#0" />
             <element signature="n#!!block;n#aufzugsteuerung1#0" />
+            <element signature="e#3872#4180#0" />
             <element signature="n#!!block;n#aufzugsteuerung2#0" />
-            <element signature="e#4626#5026#0" />
+            <element signature="e#4417#4446#0" />
+            <element signature="e#4485#4868#0" />
+            <element signature="e#4495#4853#0" />
+            <element signature="e#4874#4937#0" />
             <element signature="n#!!block;n#updateStockwerk#0" />
             <element signature="n#!!block;n#EinsteigenUndAussteigen#0" />
+            <element signature="e#5672#6002#0" />
             <element signature="n#!!block;n#aufzug_routine#0" />
-            <element signature="e#6705#6849#0" />
+            <element signature="e#7251#7977#0" />
+            <element signature="e#6873#6882#0" />
+            <element signature="e#7346#7509#0" />
             <element signature="n#!!block;n#personen_routine#0" />
             <element signature="n#!!block;n#main#1" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/Go/src/sync/waitgroup.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1173">
+          <caret line="73" selection-start-line="73" selection-end-line="73" />
         </state>
       </provider>
     </entry>
